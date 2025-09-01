@@ -1,11 +1,6 @@
 import time
 import pandas as pd
 
-width_cells = 80
-height_cells = 20
-fps = 60
-speed = 1.0
-
 def load_points(csv_path, x_col, y_col):
     df = pd.read_csv(csv_path)
     frames = df['frame'].tolist() if 'frame' in df.columns else list(range(len(df)))
@@ -13,7 +8,7 @@ def load_points(csv_path, x_col, y_col):
     ys = df[y_col].tolist()
     return list(zip(frames, xs, ys))
 
-def prepare_normalization(points, width_cells, height_cells, padding=0.07, floor_zero=False):
+def norm_circle(points, width_cells, height_cells, fps, padding=0.07, floor_zero=False):
     xs = [x for _, x, _ in points]
     ys = [y for _, _, y in points]
     xmin, xmax = min(xs), max(xs)
@@ -88,9 +83,44 @@ def draw_line(grid, x0, y0, x1, y1, Hpx):
             err += dx
             y0 += sy
 
-def animate(csv_path, x_col, y_col, floor_zero=False):
+def norm1(points, width_cells, height_cells, fps, padding=0.07, floor_zero=False, shift_x=True):
+    xs = [x for _, x, _ in points]
+    ys = [y for _, _, y in points]
+    if floor_zero and min(ys) >= 0:
+        ymin, ymax = 0, max(ys)
+    else:
+        ymin, ymax = min(ys), max(ys)
+    xmin_raw, xmax_raw = min(xs), max(xs)
+    shift = -xmin_raw if (shift_x and xmin_raw < 0) else 0
+    xs_shifted = [x + shift for x in xs]
+    xmin, xmax = min(xs_shifted), max(xs_shifted)
+    dx = xmax - xmin
+    dy = ymax - ymin
+    if dx == 0: dx = 1
+    if dy == 0: dy = 1
+    xmin -= dx * padding
+    xmax += dx * padding
+    ymin -= dy * padding
+    ymax += dy * padding
+    dx = xmax - xmin
+    dy = ymax - ymin
+    if dx == 0: dx = 1
+    if dy == 0: dy = 1
+    Wpx = width_cells * 2
+    Hpx = height_cells * 4
+    norm_points = []
+    for idx, (f, _x, y) in enumerate(points):
+        x_use = xs_shifted[idx]
+        px = (x_use - xmin) / dx * (Wpx - 1)
+        py = (y - ymin) / dy * (Hpx - 1)
+        norm_points.append((f, px, py))
+    return norm_points, Wpx, Hpx
+
+
+
+def animate(csv_path, x_col, y_col, width_cells, height_cells, fps, floor_zero=False):
     points = load_points(csv_path, x_col, y_col)
-    norm_points, Wpx, Hpx = prepare_normalization(points, width_cells, height_cells, floor_zero=floor_zero)
+    norm_points, Wpx, Hpx = norm1(points, width_cells, height_cells, fps, floor_zero=floor_zero)
     last_frame = norm_points[-1][0]
     grid = [[False]*Wpx for _ in range(Hpx)]
     prev_px = prev_py = None
@@ -103,10 +133,33 @@ def animate(csv_path, x_col, y_col, floor_zero=False):
                     else:
                         set_pixel(grid, px, py, Hpx)
                     prev_px, prev_py = px, py
-            art = draw_braille(grid, width_cells, height_cells)
+            a = draw_braille(grid, width_cells, height_cells)
             print("\033[2J\033[H", end='')
             print(f"Frame {f}/{last_frame}")
-            print(art)
-            time.sleep(1.0 / (fps * speed))
+            print(a)
+            time.sleep(0.5 / (fps * 1))
+    except KeyboardInterrupt:
+        pass
+
+def animate_circle(csv_path, x_col, y_col, width_cells, height_cells, fps, floor_zero=False):
+    points = load_points(csv_path, x_col, y_col)
+    norm_points, Wpx, Hpx = norm_circle(points, width_cells, height_cells, fps, floor_zero=floor_zero)
+    last_frame = norm_points[-1][0]
+    grid = [[False]*Wpx for _ in range(Hpx)]
+    prev_px = prev_py = None
+    try:
+        for f in range(last_frame + 1):
+            for frame_id, px, py in norm_points:
+                if frame_id == f:
+                    if prev_px is not None:
+                        draw_line(grid, prev_px, prev_py, px, py, Hpx)
+                    else:
+                        set_pixel(grid, px, py, Hpx)
+                    prev_px, prev_py = px, py
+            a = draw_braille(grid, width_cells, height_cells)
+            print("\033[2J\033[H", end='')
+            print(f"Frame {f}/{last_frame}")
+            print(a)
+            time.sleep(0.5 / (fps * 1))
     except KeyboardInterrupt:
         pass
