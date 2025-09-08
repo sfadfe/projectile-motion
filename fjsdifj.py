@@ -1,6 +1,4 @@
-import math
-
-a = 90
-
-def o():
-    return a
+a = input()
+mid = int(len(a)/2)
+print(a[:mid])
+print(a[mid:])

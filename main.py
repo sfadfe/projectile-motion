@@ -1,10 +1,9 @@
 import math
+import time
 from function import *
 import pandas as pd
-import matplotlib
-matplotlib.use('Agg')
-import matplotlib.pyplot as plt
 from fff import *
+from normalization import *
 
 fps = 150
 v0, theta = map(int, input().split())
@@ -29,12 +28,8 @@ Sx_max = abs(Sx)
 Sy = 0
 data.append({'frame': i, 'Sx': Sx, 'Sy': Sy})
 
-
 df = pd.DataFrame(data)
 df.to_csv('result.csv', index=False)
-
-plt.plot(df['Sx'], df['Sy'])
-plt.savefig('result.png')
 
 csv_path = 'result.csv'
 x = 'Sx'
@@ -42,6 +37,28 @@ y = 'Sy'
 min_width_cell = 24 * (1+(Sx_max/100))
 width_cells =  min(100, max(int(24 * (1+(Sx_max/100))), int(Sx_max/2)))
 height_cells = min(20, int(10*math.sqrt(h)))
-animate(csv_path, x, y, width_cells, height_cells, fps)
+
+points = load_points(csv_path, x, y)
+norm_points, Wpx, Hpx = norm1(points, width_cells, height_cells, fps, floor_zero=False)
+last_frame = norm_points[-1][0]
+grid = [[False]*Wpx for _ in range(Hpx)]
+prev_px = prev_py = None
+try:
+    for f in range(last_frame + 1):
+        for frame_id, px, py in norm_points:
+            if frame_id == f:
+                if prev_px is not None:
+                    draw_line(grid, prev_px, prev_py, px, py, Hpx)
+                else:
+                    set_pixel(grid, px, py, Hpx)
+                prev_px, prev_py = px, py
+        a = draw_braille(grid, width_cells, height_cells)
+        print("\033[2J\033[H", end='')
+        print(f"Frame {f}/{last_frame}")
+        print(a)
+        time.sleep(0.5 / (fps * 1))
+except KeyboardInterrupt:
+    pass
+
 print(t)
 print(h)

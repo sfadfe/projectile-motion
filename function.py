@@ -17,7 +17,7 @@ def eq3(v, v0, a): # S = ((V + V0)/2)t
 v = rw
 """
 
-def eq4(r, v): # v= rw
+def eq4(r, v): # v= rw, w = rad/s
     return v/r
 
 def eq5(w, t): # w = dθ / dt
