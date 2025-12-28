@@ -52,6 +52,6 @@ try:
         print("\033[2J\033[H", end='')
         print(f"Frame {f}/{last_frame}")
         print(a)
-        time.sleep(0.5 / (fps * 1))
+        time.sleep(0.5 / (fps * 1.59))
 except KeyboardInterrupt:
     pass

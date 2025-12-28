@@ -5,7 +5,7 @@ import pandas as pd
 from fff import *
 from normalization import *
 
-fps = 150
+fps = 324
 v0, theta = map(int, input().split())
 Vx = v0 * math.cos(math.radians(theta))
 Vy = v0 * math.sin(math.radians(theta))
@@ -18,7 +18,7 @@ frame = math.ceil(t * fps * 2)  #현재로썬 이 방법이 최선. t가 작아�
 data = []
 for i in range(frame):
     sec = i/fps
-    Sx = eq2(sec, Vx, 0)
+    Sx = eq2(sec, Vx, 0)    
     Sy = eq2(sec, Vy, -g) if sec <= t*2  else h - eq2(sec - t, 0, g)
     data.append({'frame': i, 'Sx': Sx, 'Sy': Sy})
 
@@ -39,9 +39,9 @@ width_cells =  min(100, max(int(24 * (1+(Sx_max/100))), int(Sx_max/2)))
 height_cells = min(20, int(10*math.sqrt(h)))
 
 points = load_points(csv_path, x, y)
-norm_points, Wpx, Hpx = norm1(points, width_cells, height_cells, fps, floor_zero=False)
+norm_points, Wpx, Hpx = norm1(points, width_cells, height_cells, h, padding=0.0001)
 last_frame = norm_points[-1][0]
-grid = [[False]*Wpx for _ in range(Hpx)]
+grid = [[False]*Wpx for i in range(Hpx)]
 prev_px = prev_py = None
 try:
     for f in range(last_frame + 1):
@@ -52,11 +52,11 @@ try:
                 else:
                     set_pixel(grid, px, py, Hpx)
                 prev_px, prev_py = px, py
-        a = draw_braille(grid, width_cells, height_cells)
+        a = draw_braille(grid, Wpx, Hpx)
         print("\033[2J\033[H", end='')
         print(f"Frame {f}/{last_frame}")
         print(a)
-        time.sleep(0.5 / (fps * 1))
+        time.sleep(0.5 / (frame * 0.63))
 except KeyboardInterrupt:
     pass
 

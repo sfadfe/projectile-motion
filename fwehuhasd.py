@@ -22,7 +22,7 @@ df = pd.DataFrame(data)
 df.to_csv('output.csv', index=False)
 
 points = load_points('output.csv', 'x', 'y')
-norm_points, Wpx, Hpx = norm_circle(points, 80, 20, fps, floor_zero=False)
+norm_points, Wpx, Hpx = norm_circle(points, 80, 20, fps, isYminus=False)
 last_frame = norm_points[-1][0]
 grid = [[False]*Wpx for _ in range(Hpx)]
 prev_px = prev_py = None

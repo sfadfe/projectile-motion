@@ -1,13 +1,12 @@
 import pandas as pd
 from normalization import *
 
-def load_points(csv_path, x_col, y_col):
+def load_points(csv_path, x, y):
     df = pd.read_csv(csv_path)
     frames = df['frame'].tolist() if 'frame' in df.columns else list(range(len(df)))
-    xs = df[x_col].tolist()
-    ys = df[y_col].tolist()
+    xs = df[x].tolist()
+    ys = df[y].tolist()
     return list(zip(frames, xs, ys))
-
 
 DOT_MAP = {
     (0,0): 1, (0,1): 2, (0,2): 3, (0,3): 7,
